@@ -4,6 +4,8 @@
 
 > 이 저장소의 예시 출력은 실제 실행 결과와 실행 전 예상 결과를 섞지 않습니다. 현재 PC에서는 Docker Desktop 설치까지 완료했지만 Windows의 `VirtualMachinePlatform` 기능이 꺼져 있어 Docker 엔진 검증은 재부팅 후 실행해야 합니다. 자세한 진단은 [Docker 엔진 진단](docs/docker-engine-diagnosis.md)에 기록했습니다.
 
+공개 제출 저장소: <https://github.com/sy05kim/codyssey-dev-station>
+
 ## 1. 프로젝트 개요
 
 - 커스텀 NGINX 이미지로 반응형 정적 웹 페이지 제공
@@ -25,7 +27,7 @@
 | 포트·바인드·볼륨 자동 검증 | 준비 완료 | `scripts/verify.ps1` |
 | Docker 엔진 실증 로그 | 재부팅 후 실행 필요 | [원인과 완료 절차](docs/docker-engine-diagnosis.md) |
 | Git 저장소/기본 브랜치 | 완료 | 로컬 저장소 `main` |
-| GitHub 원격 저장소 | 사용자 계정에서 생성·연결 필요 | 아래 제출 절차 |
+| GitHub 원격 저장소 | 완료 | [sy05kim/codyssey-dev-station](https://github.com/sy05kim/codyssey-dev-station) |
 
 ## 3. 실행 환경
 
@@ -82,7 +84,8 @@ Git 사용자 이름과 이메일은 로컬에 설정되어 있음을 확인했�
 - [ ] 8080/8081 포트 응답, `docker logs`, `docker stats` 기록
 - [ ] 바인드 마운트 전/후 응답 비교
 - [ ] 볼륨 연결 및 컨테이너 삭제 전/후 데이터 비교
-- [ ] GitHub 저장소 생성·push·VSCode 연결 화면 확보
+- [x] GitHub 공개 저장소 생성 및 `main` 브랜치 push
+- [ ] VSCode 연결 화면 확보
 
 미완료 Docker 항목은 환경 활성화 후 다음 한 명령으로 순서대로 검증됩니다.
 
