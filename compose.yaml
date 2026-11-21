@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      context: .
+    image: codyssey-dev-station:1.0
+    container_name: codyssey-dev-station
+    ports:
+      - "${HOST_PORT:-8080}:80"
+    environment:
+      APP_ENV: dev
+    restart: unless-stopped

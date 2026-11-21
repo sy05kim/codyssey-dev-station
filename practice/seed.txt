@@ -1,0 +1,2 @@
+Codyssey CLI practice seed file.
+This file is copied, renamed, read, and permission-checked by scripts/cli-practice.sh.

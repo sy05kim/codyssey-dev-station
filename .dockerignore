@@ -1,0 +1,8 @@
+.git
+.gitignore
+tmp
+docs
+practice
+README.md
+compose*.yaml
+.env*
