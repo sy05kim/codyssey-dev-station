@@ -31,6 +31,11 @@ jobs:
         run: |
           python3 -m pip install --disable-pip-version-check --target "$RUNNER_TEMP/capture-deps" Pillow
           export PYTHONPATH="$RUNNER_TEMP/capture-deps"
+          font_dir="${XDG_DATA_HOME:-$HOME/.local/share}/fonts"
+          mkdir -p "$font_dir"
+          curl -fsSL --max-time 20 --retry 2 -o "$font_dir/NotoSansKR.ttf" \
+            'https://raw.githubusercontent.com/google/fonts/4efc2774c63917927efe769ca845def6bd6debae/ofl/notosanskr/NotoSansKR%5Bwght%5D.ttf'
+          fc-cache -f "$font_dir"
           xvfb-run -a -s '-screen 0 1280x900x24' python3 - <<'PYTHON'
           import json
           import os
@@ -48,6 +53,7 @@ jobs:
                   [
                       "google-chrome", "--no-sandbox", "--disable-dev-shm-usage",
                       "--no-first-run", "--disable-background-networking",
+                      "--test-type", "--disable-features=Translate",
                       "--window-position=0,0", "--window-size=1280,900",
                       "--force-device-scale-factor=1", "--remote-debugging-port=0",
                       f"--user-data-dir={profile}", url,
