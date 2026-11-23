@@ -225,7 +225,7 @@ $ docker logs codyssey-verify-2019-web-a
 /docker-entrypoint.sh: Configuration complete; ready for start up
 2026/11/23 11:03:25 [notice] 1#1: using the "epoll" event method
 2026/11/23 11:03:25 [notice] 1#1: nginx/1.31.9
-2026/11/23 11:03:25 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+2026/11/23 11:03:25 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0)
 2026/11/23 11:03:25 [notice] 1#1: OS: Linux 7.0.0-1017-azure
 2026/11/23 11:03:25 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 65536:65536
 2026/11/23 11:03:25 [notice] 1#1: start worker processes
