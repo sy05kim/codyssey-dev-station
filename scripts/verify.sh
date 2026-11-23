@@ -37,7 +37,7 @@ run() {
 }
 
 wait_for_web() {
-    curl -fsS --retry 20 --retry-connrefused --retry-delay 1 "http://127.0.0.1:$1/health" >/dev/null
+    curl -fsS --max-time 3 --retry 20 --retry-all-errors --retry-delay 1 "http://127.0.0.1:$1/health" >/dev/null
 }
 
 printf '\n## 실행 환경과 Docker 엔진\n'
@@ -60,6 +60,7 @@ printf '$ printf %%s\\n %q | timeout 20s docker attach %q\n' \
     'echo "attached to the main bash process"; exit 0' "$ubuntu"
 printf '%s\n' 'echo "attached to the main bash process"; exit 0' | timeout 20s docker attach "$ubuntu"
 run docker wait "$ubuntu"
+run docker logs "$ubuntu"
 run docker inspect --format 'running after attach and exit: {{.State.Running}}' "$ubuntu"
 [[ $(docker inspect --format '{{.State.Running}} {{.State.ExitCode}}' "$ubuntu") == 'false 0' ]]
 run docker ps -a --filter "name=$prefix"
