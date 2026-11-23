@@ -1,0 +1,59 @@
+name: Verify Codyssey mission
+
+on:
+  push:
+    paths:
+      - '.github/workflows/verify-mission.yaml'
+      - 'Dockerfile'
+      - 'nginx/**'
+      - 'site/**'
+      - 'bind-demo/**'
+      - 'scripts/verify.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Docker practice and collect commands and output
+        shell: bash
+        run: |
+          mkdir -p evidence
+          KEEP_RESOURCES=1 bash scripts/verify.sh 2>&1 | tee evidence/docker.txt
+      - name: Capture port mapping in Chrome
+        shell: bash
+        run: |
+          if ! command -v xvfb-run >/dev/null || ! command -v import >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y imagemagick xvfb xauth
+          fi
+          xvfb-run -a -s '-screen 0 1280x900x24' bash -euo pipefail -c '
+            chrome_profile=$(mktemp -d)
+            google-chrome --no-sandbox --disable-dev-shm-usage --no-first-run \
+              --disable-background-networking --window-position=0,0 --window-size=1280,900 \
+              --user-data-dir="$chrome_profile" http://127.0.0.1:8080/ &
+            browser_pid=$!
+            trap '\''kill "$browser_pid" 2>/dev/null || true'\'' EXIT
+            for attempt in {1..30}; do
+              if xwininfo -root -tree | grep "Dev Station" >/dev/null; then
+                sleep 1
+                import -window root evidence/browser-8080.png
+                exit
+              fi
+              sleep 1
+            done
+            xwininfo -root -tree
+            exit 1
+          '
+      - name: Upload mission evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission-evidence
+          path: evidence/
+          if-no-files-found: error
