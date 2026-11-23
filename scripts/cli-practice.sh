@@ -2,36 +2,33 @@
 set -eu
 
 lab_root="${1:-./tmp/cli-practice}"
+seed_path="$(pwd)/practice/seed.txt"
 
-printf '%s\n' '$ pwd'
-pwd
+run() {
+    printf '$'
+    printf ' %s' "$@"
+    printf '\n'
+    "$@"
+}
 
-printf '\n%s\n' '$ mkdir -p "$lab_root/source" "$lab_root/archive"'
-mkdir -p "$lab_root/source" "$lab_root/archive"
+run pwd
+run mkdir -p "$lab_root/source" "$lab_root/archive"
+run cd "$lab_root"
+run pwd
+run touch source/empty.txt source/.hidden-note
+run ls -la source archive
+run cp "$seed_path" source/seed-copy.txt
+run mv source/seed-copy.txt archive/renamed-note.txt
+run cat archive/renamed-note.txt
 
-printf '\n%s\n' '$ touch empty.txt .hidden-note'
-touch "$lab_root/source/empty.txt" "$lab_root/source/.hidden-note"
+printf '\n권한 변경 전\n'
+run chmod 600 archive/renamed-note.txt
+run chmod 700 archive
+run ls -ld archive archive/renamed-note.txt
+printf '\n권한 변경 후\n'
+run chmod 644 archive/renamed-note.txt
+run chmod 755 archive
+run ls -ld archive archive/renamed-note.txt
 
-printf '\n%s\n' '$ cp seed.txt seed-copy.txt'
-cp practice/seed.txt "$lab_root/source/seed-copy.txt"
-
-printf '\n%s\n' '$ mv seed-copy.txt archive/renamed-note.txt'
-mv "$lab_root/source/seed-copy.txt" "$lab_root/archive/renamed-note.txt"
-
-printf '\n%s\n' '$ cat archive/renamed-note.txt'
-cat "$lab_root/archive/renamed-note.txt"
-
-printf '\n%s\n' '$ chmod 644 file; chmod 755 directory'
-chmod 644 "$lab_root/archive/renamed-note.txt"
-chmod 755 "$lab_root/archive"
-ls -ld "$lab_root/archive"
-ls -l "$lab_root/archive/renamed-note.txt"
-
-printf '\n%s\n' '$ ls -la source archive'
-ls -la "$lab_root/source" "$lab_root/archive"
-
-printf '\n%s\n' '$ rm empty.txt'
-rm "$lab_root/source/empty.txt"
-
-printf '\n%s\n' '$ find lab -maxdepth 2 -print'
-find "$lab_root" -maxdepth 2 -print
+run rm source/empty.txt
+run ls -la source archive

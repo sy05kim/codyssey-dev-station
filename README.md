@@ -1,227 +1,84 @@
-# Dev Station - Codyssey 개발 작업실 미션
+# Dev Station · Codyssey 개발 작업실 미션
 
-터미널, Docker, Git을 이용해 재현 가능한 정적 웹 서버 개발 환경을 구성한 프로젝트입니다. `nginx:alpine`을 기반으로 커스텀 이미지를 만들고, 포트 매핑·바인드 마운트·명명된 볼륨의 동작을 한 번에 검증할 수 있도록 소스와 자동화 스크립트를 함께 제공합니다.
+터미널과 Git으로 작업 환경을 구성하고, NGINX 기반 정적 웹 서버를 Docker 이미지로 만들어 실행합니다. 포트 매핑으로 웹에 접속하고, 바인드 마운트의 파일 변경 반영과 Docker 볼륨의 데이터 영속성을 확인합니다.
 
-> 이 저장소의 예시 출력은 실제 실행 결과와 실행 전 예상 결과를 섞지 않습니다. 현재 PC에서는 Docker Desktop 설치까지 완료했지만 Windows의 `VirtualMachinePlatform` 기능이 꺼져 있어 Docker 엔진 검증은 재부팅 후 실행해야 합니다. 자세한 진단은 [Docker 엔진 진단](docs/docker-engine-diagnosis.md)에 기록했습니다.
+[공개 제출 저장소](https://github.com/sy05kim/codyssey-dev-station)
 
-공개 제출 저장소: <https://github.com/sy05kim/codyssey-dev-station>
+## 수행 체크리스트
 
-## 1. 프로젝트 개요
+| 항목 | 확인 방법 | 결과 |
+|---|---|---|
+| 터미널 기본 조작 | `pwd`, `cd`, `ls -la`, `mkdir`, `touch`, `cp`, `mv`, `cat`, `rm` | [실행 로그](docs/cli-practice-log.md) |
+| 파일·디렉터리 권한 | `chmod`, `ls -ld`로 변경 전후 확인 | [파일 600 → 644, 디렉터리 700 → 755](docs/cli-practice-log.md#경로와-권한-해석) |
+| Docker 엔진과 운영 | `docker --version`, `info`, `pull`, `images`, `ps -a`, `logs`, `stats`, `stop` | [Docker 실행 로그](docs/docker-practice-log.md) |
+| 기본 컨테이너 | `hello-world` 실행, Ubuntu에서 `exec`와 `attach` 비교 | [Docker 실행 로그](docs/docker-practice-log.md) |
+| 커스텀 Dockerfile | `docker build`와 `docker run` | [Dockerfile](Dockerfile) · [웹 소스](site/) · [빌드·실행 로그](docs/docker-practice-log.md) |
+| 포트 매핑 | 동일 이미지로 8080 및 8081에서 HTTP 응답 확인 | [HTTP 응답](docs/docker-practice-log.md) · [주소창 포함 브라우저 캡처](docs/browser-8080.png) |
+| 바인드 마운트 | 호스트의 HTML을 수정한 뒤 `curl` 재요청 | [original → updated](docs/docker-practice-log.md) |
+| Docker 볼륨 | 첫 컨테이너 삭제 후 새 컨테이너에서 같은 볼륨 읽기 | [persistent-data 유지](docs/docker-practice-log.md) |
+| Git과 GitHub | `main`과 원격 저장소 확인 | [Git 설정 및 원격 연결 기록](docs/git-vscode-evidence.md) |
+| VS Code 연동 | Accounts에서 GitHub 로그인, Source Control에서 저장소 확인 | [개인 PC 증거 첨부 대기](docs/git-vscode-evidence.md#vs-code-연동-캡처) |
 
-- 커스텀 NGINX 이미지로 반응형 정적 웹 페이지 제공
-- `/health` 엔드포인트와 Docker `HEALTHCHECK` 제공
-- 동일 이미지의 `8080:80`, `8081:80` 이중 포트 매핑 검증
-- 호스트 파일 변경이 즉시 반영되는 바인드 마운트 검증
-- 컨테이너 교체 후에도 데이터가 남는 Docker 볼륨 검증
-- `HOST_PORT` 환경 변수로 포트를 바꾸는 Docker Compose 구성
-- 터미널 파일 조작·권한 변경 실습과 실제 출력 기록
+## 실행 환경
 
-## 2. 수행 상태
+Docker 실행 로그와 브라우저 캡처는 GitHub Actions의 Ubuntu 환경에서 수집했습니다. Windows Docker Desktop 설치 기록과 엔진 오류는 [Windows 진단](docs/docker-engine-diagnosis.md)에서 확인할 수 있습니다.
 
-| 항목 | 상태 | 증거/재현 위치 |
-|---|---:|---|
-| 터미널 기본 조작 | 완료 | [실제 CLI 로그](docs/cli-practice-log.md) |
-| 파일·디렉터리 권한 644/755 | 완료 | [실제 CLI 로그](docs/cli-practice-log.md) |
-| Docker Desktop 설치 | 완료 | 4.99.0 설치 확인 |
-| 커스텀 Dockerfile/웹 소스 | 완료 | `Dockerfile`, `nginx/`, `site/` |
-| 포트·바인드·볼륨 자동 검증 | 준비 완료 | `scripts/verify.ps1` |
-| Docker 엔진 실증 로그 | 재부팅 후 실행 필요 | [원인과 완료 절차](docs/docker-engine-diagnosis.md) |
-| Git 저장소/기본 브랜치 | 완료 | 로컬 저장소 `main` |
-| GitHub 원격 저장소 | 완료 | [sy05kim/codyssey-dev-station](https://github.com/sy05kim/codyssey-dev-station) |
-
-## 3. 실행 환경
-
-| 구분 | 값 |
+| 작업 | 환경 |
 |---|---|
-| OS | Microsoft Windows NT 10.0.26200.0, x64 |
-| Shell | PowerShell 7.6.9 / Git Bash |
-| Git | 2.55.0.windows.5 |
-| Docker Desktop | 4.99.0 |
-| Docker base image | `nginx:alpine` |
-| 컨테이너 포트 | `80/tcp` |
+| 터미널·권한 | Debian 13, Bash 터미널에서 POSIX 셸 실행 |
+| Docker·브라우저 | Ubuntu 24.04.5 LTS, Bash, Chrome, Docker CLI·엔진 28.0.4, Git 2.56.1 |
+| 기존 Windows 작업 | Windows 11, PowerShell 7.6.9 / Git Bash, Git 2.55.0.windows.5, Docker Desktop 4.99.0 |
 
-Git 사용자 이름과 이메일은 로컬에 설정되어 있음을 확인했지만 개인정보 보호를 위해 문서에 값은 싣지 않았습니다.
+Docker CLI·서버·Git 버전의 실제 출력은 [Docker 실행 로그](docs/docker-practice-log.md) 상단에 있습니다. [GitHub Actions 원본 실행](https://github.com/sy05kim/codyssey-dev-station/actions/runs/45161608202)에서도 단계별 결과를 볼 수 있습니다.
 
-## 4. 프로젝트 구조
+## 재현 방법
 
-```text
-.
-├── Dockerfile                 # NGINX 커스텀 이미지
-├── compose.yaml               # 선택 과제: Compose + HOST_PORT
-├── .env.example               # Compose 환경 변수 예시
-├── nginx/
-│   └── default.conf           # 정적 파일 및 /health 설정
-├── site/
-│   ├── index.html             # 웹 페이지
-│   ├── styles.css             # 반응형 스타일
-│   └── script.js              # 런타임 시계
-├── bind-demo/
-│   └── index.html             # 바인드 마운트 전/후 비교용
-├── practice/
-│   └── seed.txt               # CLI 복사·이름 변경용 원본
-├── scripts/
-│   ├── cli-practice.sh        # 터미널/권한 실습 재현
-│   └── verify.ps1             # Docker 전체 검증 자동화
-└── docs/
-    ├── cli-practice-log.md
-    └── docker-engine-diagnosis.md
+Docker 엔진이 실행 중인 환경에서 저장소를 받은 뒤 Bash로 실습합니다. Windows에서는 Docker Desktop의 WSL 통합이 켜진 WSL 터미널에서 같은 명령을 실행할 수 있습니다.
+
+```bash
+git clone https://github.com/sy05kim/codyssey-dev-station.git
+cd codyssey-dev-station
+sh scripts/cli-practice.sh
+bash scripts/verify.sh
 ```
 
-## 5. 수행 체크리스트
+검증 스크립트는 실행 명령과 출력 결과를 순서대로 표시하고 이번 실행에서 만든 실습 컨테이너와 볼륨을 정리합니다. 8080, 8081, 8082 중 사용 중인 포트가 있다면 `PORT_A=9080 PORT_B=9081 PORT_BIND=9082 bash scripts/verify.sh`처럼 바꿔 실행합니다.
 
-- [x] 현재 위치 확인과 숨김 파일 포함 목록 조회
-- [x] 디렉터리 생성, 빈 파일 생성, 복사, 이동/이름 변경, 삭제
-- [x] 파일 내용 확인
-- [x] 파일 `644`, 디렉터리 `755` 권한 변경과 전/후 확인
-- [x] Git 사용자 설정 존재 및 기본 브랜치 확인
-- [x] Docker Desktop 설치 및 CLI 위치 확인
-- [x] Dockerfile 직접 작성
-- [x] 정적 웹 서버와 `/health` 구성
-- [x] Compose 및 포트 환경 변수 구성
-- [ ] Docker 엔진 시작 확인 (`VirtualMachinePlatform` 활성화와 재부팅 필요)
-- [ ] 이미지 빌드와 `docker images` 결과 기록
-- [ ] `hello-world`, 컨테이너 진입 및 `docker ps -a` 기록
-- [ ] 8080/8081 포트 응답, `docker logs`, `docker stats` 기록
-- [ ] 바인드 마운트 전/후 응답 비교
-- [ ] 볼륨 연결 및 컨테이너 삭제 전/후 데이터 비교
-- [x] GitHub 공개 저장소 생성 및 `main` 브랜치 push
-- [ ] VSCode 연결 화면 확보
+웹 화면을 브라우저에서 직접 확인하려면 다음 명령을 실행한 뒤 `http://127.0.0.1:8080/`에 접속합니다.
 
-미완료 Docker 항목은 환경 활성화 후 다음 한 명령으로 순서대로 검증됩니다.
-
-```powershell
-./scripts/verify.ps1 -KeepResources
-```
-
-## 6. Docker 빌드 및 기본 실행
-
-### 설치 점검
-
-```powershell
-docker --version
-docker info
-docker images
-docker ps -a
-```
-
-### 커스텀 이미지 빌드
-
-```powershell
+```bash
 docker build -t codyssey-dev-station:1.0 .
-docker images codyssey-dev-station:1.0
+docker run -d -p 127.0.0.1:8080:80 --name codyssey-web codyssey-dev-station:1.0
+curl -i http://127.0.0.1:8080/health
+docker logs codyssey-web
+docker stop codyssey-web
+docker rm codyssey-web
 ```
 
-이 Dockerfile의 커스텀 포인트는 다음과 같습니다.
+## 구현과 검증 원리
 
-1. `nginx:alpine`을 기존 베이스 이미지로 선택했습니다.
-2. `default.conf`로 `/health`, 정적 파일 라우팅, 캐시 헤더를 추가했습니다.
-3. 자체 HTML/CSS/JS 콘텐츠를 이미지에 복사했습니다.
-4. OCI 메타데이터, `APP_ENV`, `HEALTHCHECK`를 추가했습니다.
+- **커스텀 이미지**는 `nginx:alpine`에 [HTML·CSS·JavaScript](site/)와 [NGINX 설정](nginx/default.conf)을 복사합니다. `/health`로 서버 응답을 점검하고, 이미지 레이블로 용도를 기록합니다.
+- **포트 매핑**은 호스트의 8080·8081 각각을 서로 다른 컨테이너의 80번 포트에 연결합니다. 두 컨테이너는 같은 이미지에서 실행합니다.
+- **Ubuntu 실행**에서 `exec`는 새 셸을 실행합니다. 이 셸 종료 뒤에는 컨테이너가 계속 실행됩니다. `attach`로 처음 실행한 Bash 프로세스에 연결해 `exit`를 보내면 컨테이너도 종료됩니다.
+- **바인드 마운트**는 복사한 호스트 데모 폴더를 NGINX 문서 루트에 읽기 전용으로 연결합니다. 호스트가 HTML을 수정하면 이미지 재빌드 없이 응답이 바뀝니다.
+- **명명된 볼륨**은 컨테이너에서 분리해 데이터를 저장합니다. 첫 컨테이너가 볼륨에 파일을 쓰고, 삭제 후에 같은 볼륨을 연결한 새 컨테이너가 파일을 읽습니다.
+- **Git**은 로컬 변경 이력을 관리하고, **GitHub**는 원격 저장소를 통해 이력을 공유합니다.
 
-### 동일 이미지를 두 포트에서 실행
+## 문제 해결 기록
 
-```powershell
-docker run -d -p 8080:80 --name codyssey-web-8080 codyssey-dev-station:1.0
-docker run -d -p 8081:80 --name codyssey-web-8081 codyssey-dev-station:1.0
-curl.exe http://localhost:8080/health
-curl.exe http://localhost:8081/health
-docker ps --filter "name=codyssey-web"
-docker logs codyssey-web-8080
-docker stats --no-stream codyssey-web-8080 codyssey-web-8081
-```
+| 문제 | 원인 가설 | 확인 | 해결 또는 대안 |
+|---|---|---|---|
+| Windows에서 `docker` 인식 실패 | Docker Desktop 미설치 또는 PATH 미반영 | `Get-Command docker`와 표준 설치 경로에서 실행 파일을 찾지 못함 | `winget`으로 Docker Desktop 4.99.0 설치. 새 PowerShell에서 다시 확인 |
+| Windows에서 Docker API 500 응답 | WSL2 백엔드에 필요한 가상화 기능이 비활성화됨 | 백엔드 로그에서 `Virtual Machine Platform not enabled` 확인 | [Windows 복구 절차](docs/docker-engine-diagnosis.md). 제출용 Docker 실습은 Linux에서 실행 |
+| 첫 CI 실행에서 포트 8082가 연결을 재설정 | Docker가 포트를 열었지만 NGINX가 아직 요청을 처리할 준비가 되지 않음 | 실행 직후 `curl`이 오류 56으로 종료. 같은 실행에서 8080·8081은 HTTP 200 응답 | 준비 확인 요청이 연결 재설정을 포함한 일시적 오류를 재시도하도록 변경. [첫 실행 로그](https://github.com/sy05kim/codyssey-dev-station/actions/runs/45159981952) |
 
-포트 매핑이 필요한 이유는 컨테이너 내부의 `80/tcp`가 호스트에서 자동으로 노출되지 않기 때문입니다. `8080:80`은 `호스트 포트:컨테이너 포트`이며, 같은 이미지를 격리된 컨테이너로 여러 번 실행할 수 있습니다.
+## 선택 과제 · Docker Compose
 
-브라우저 확인 주소:
-
-- `http://localhost:8080`
-- `http://localhost:8081`
-- `http://localhost:8080/health`
-
-## 7. 바인드 마운트 검증
-
-호스트의 `bind-demo` 디렉터리를 NGINX 문서 루트에 읽기 전용으로 연결합니다.
-
-```powershell
-$bindPath = (Resolve-Path ./bind-demo).Path
-docker run -d -p 8082:80 --name codyssey-bind-demo `
-  -v "${bindPath}:/usr/share/nginx/html:ro" `
-  codyssey-dev-station:1.0
-curl.exe http://localhost:8082
-```
-
-호스트의 `bind-demo/index.html`에서 `original`을 `updated`로 바꾼 뒤 다시 요청하면 이미지 재빌드 없이 결과가 변경됩니다. 검증 스크립트는 변경 전후를 요청한 다음 원본 파일을 복구합니다.
-
-## 8. Docker 볼륨 영속성 검증
-
-```powershell
-docker volume create codyssey-mission-data
-docker run -d --name codyssey-volume-a `
-  -v codyssey-mission-data:/data `
-  codyssey-dev-station:1.0 `
-  sh -c "printf 'persistent-data\n' > /data/proof.txt && sleep 300"
-docker exec codyssey-volume-a cat /data/proof.txt
-docker rm -f codyssey-volume-a
-
-docker run -d --name codyssey-volume-b `
-  -v codyssey-mission-data:/data `
-  codyssey-dev-station:1.0 sh -c "sleep 300"
-docker exec codyssey-volume-b cat /data/proof.txt
-```
-
-두 번째 컨테이너에서도 `persistent-data`가 출력되면 컨테이너와 데이터 수명이 분리되어 있음을 증명합니다.
-
-## 9. Docker Compose 선택 과제
-
-```powershell
-Copy-Item .env.example .env
-docker compose up -d --build
+```bash
+HOST_PORT=9080 docker compose up -d --build
 docker compose ps
 docker compose logs
 docker compose down
 ```
 
-`.env`의 `HOST_PORT=8080` 값을 바꾸면 Compose 파일을 수정하지 않고 호스트 공개 포트를 바꿀 수 있습니다. 이는 실행 설정과 이미지/소스 코드를 분리합니다.
-
-## 10. Git과 GitHub
-
-현재 로컬 Git 설정은 사용자 정보가 구성되어 있고 기본 브랜치는 `main`입니다.
-
-```powershell
-git config --list
-git status
-git log --oneline --decorate -5
-```
-
-Git은 로컬 버전 관리 도구이고, GitHub는 원격 저장소·협업·리뷰를 제공하는 서비스입니다. 제출 전 GitHub에서 빈 저장소를 만든 뒤 다음 명령으로 연결합니다.
-
-```powershell
-git remote add origin https://github.com/<account>/codyssey-dev-station.git
-git push -u origin main
-git remote -v
-```
-
-VSCode에서는 Accounts 메뉴로 GitHub에 로그인한 뒤 Source Control 화면에서 연결된 저장소와 동기화 상태를 확인합니다. 토큰·비밀번호·인증 코드가 캡처나 커밋에 포함되지 않도록 주의합니다.
-
-## 11. 문제 해결 기록
-
-### 사례 1 - `docker` 명령을 찾을 수 없음
-
-- 문제: `docker --version`이 PowerShell에서 인식되지 않았습니다.
-- 원인 가설: Docker Desktop이 설치되지 않았거나 PATH가 현재 셸에 반영되지 않았습니다.
-- 확인: `Get-Command docker`와 표준 설치 경로를 확인했을 때 실행 파일이 없었습니다.
-- 해결: `winget`으로 Docker Desktop 4.99.0을 설치했습니다. 새 셸 전까지는 `C:\Program Files\Docker\Docker\resources\bin\docker.exe` 절대 경로로도 실행할 수 있습니다.
-
-### 사례 2 - Docker API가 500으로 응답
-
-- 문제: Docker CLI가 `dockerDesktopLinuxEngine`의 `/info` 요청에 500을 반환했습니다.
-- 원인 가설: WSL2 백엔드가 시작되기 위한 Windows 가상화 구성요소가 비활성화되어 있습니다.
-- 확인: Docker 백엔드 로그에 `Virtual Machine Platform not enabled`와 `No virtualization available`이 기록됐습니다.
-- 해결/대안: 관리자 권한으로 `VirtualMachinePlatform`과 WSL 기능을 활성화하고 Windows를 재부팅한 뒤 `scripts/verify.ps1`을 실행합니다. 현재 세션에서는 관리자 승인과 재부팅이 필요한 단계라 실증 로그를 만들지 않았습니다.
-
-## 12. 보안과 개인정보
-
-- `.env`, 로그, 임시 폴더는 `.gitignore`에서 제외합니다.
-- Git 이메일·토큰·비밀번호·인증 코드는 README나 캡처에 넣지 않습니다.
-- 바인드 마운트는 데모 콘텐츠에만 적용하고 `:ro`로 제한합니다.
-- Docker 검증 출력 공유 전 사용자 경로와 계정 정보를 다시 확인합니다.
+`HOST_PORT`는 호스트 포트를 고르는 실행 설정으로, [Compose 구성](compose.yaml)과 [.env 예시](.env.example)에 정의되어 있습니다.

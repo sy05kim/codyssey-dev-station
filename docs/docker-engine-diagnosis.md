@@ -1,6 +1,8 @@
 # Docker 엔진 진단
 
-## 현재 상태
+Windows에서 Docker Desktop을 설치하고 확인했을 때의 기록입니다. 제출용 Docker 실습은 별도의 Linux 환경에서 실행했습니다. [Linux Docker 검증 로그](docker-practice-log.md)에서 결과를 확인할 수 있습니다.
+
+## Windows 점검 당시 상태
 
 - Docker Desktop 4.99.0 설치 완료
 - Docker CLI 설치 경로 확인 완료
@@ -22,7 +24,7 @@ Virtual Machine Platform not enabled
 No virtualization available
 ```
 
-## 완료 절차
+## Windows에서 다시 실행하는 절차
 
 관리자 PowerShell에서 다음 Windows 기능을 활성화합니다.
 

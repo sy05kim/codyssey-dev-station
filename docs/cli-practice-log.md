@@ -1,62 +1,65 @@
 # 터미널 조작 및 권한 실습 로그
 
-실행 일시: 2026-11-21 (KST)
-
-셸: Git Bash
-
-재현 명령: `./scripts/cli-practice.sh`
-
-아래는 실제 실행 출력입니다.
+실행 환경은 Debian 13의 Bash 터미널입니다. 실습 스크립트는 POSIX 셸로 실행했습니다. 공유 경로와 소유자 정보는 `<workspace>`, `<user>`로 표시했습니다.
 
 ```text
+$ sh scripts/cli-practice.sh
 $ pwd
-/c/Users/nemsk/Documents/ChatGPT/코디세이 올인원 E1-1
+<workspace>
+$ mkdir -p ./tmp/cli-practice/source ./tmp/cli-practice/archive
+$ cd ./tmp/cli-practice
+$ pwd
+<workspace>/tmp/cli-practice
+$ touch source/empty.txt source/.hidden-note
+$ ls -la source archive
+archive:
+total 8
+drwxr-xr-x 2 <user> <user> 4096 Nov 23 19:52 .
+drwxr-xr-x 4 <user> <user> 4096 Nov 23 19:52 ..
 
-$ mkdir -p "$lab_root/source" "$lab_root/archive"
-
-$ touch empty.txt .hidden-note
-
-$ cp seed.txt seed-copy.txt
-
-$ mv seed-copy.txt archive/renamed-note.txt
-
+source:
+total 8
+drwxr-xr-x 2 <user> <user> 4096 Nov 23 19:52 .
+drwxr-xr-x 4 <user> <user> 4096 Nov 23 19:52 ..
+-rw-r--r-- 1 <user> <user>    0 Nov 23 19:52 .hidden-note
+-rw-r--r-- 1 <user> <user>    0 Nov 23 19:52 empty.txt
+$ cp <workspace>/practice/seed.txt source/seed-copy.txt
+$ mv source/seed-copy.txt archive/renamed-note.txt
 $ cat archive/renamed-note.txt
 Codyssey CLI practice seed file.
 This file is copied, renamed, read, and permission-checked by scripts/cli-practice.sh.
 
-$ chmod 644 file; chmod 755 directory
-drwxr-xr-x 1 nemsk 197609 0 Nov 21 17:47 ./tmp/cli-practice/archive
--rw-r--r-- 1 nemsk 197609 121 Nov 21 17:47 ./tmp/cli-practice/archive/renamed-note.txt
+권한 변경 전
+$ chmod 600 archive/renamed-note.txt
+$ chmod 700 archive
+$ ls -ld archive archive/renamed-note.txt
+drwx------ 2 <user> <user> 4096 Nov 23 19:52 archive
+-rw------- 1 <user> <user>  120 Nov 23 19:52 archive/renamed-note.txt
 
+권한 변경 후
+$ chmod 644 archive/renamed-note.txt
+$ chmod 755 archive
+$ ls -ld archive archive/renamed-note.txt
+drwxr-xr-x 2 <user> <user> 4096 Nov 23 19:52 archive
+-rw-r--r-- 1 <user> <user>  120 Nov 23 19:52 archive/renamed-note.txt
+$ rm source/empty.txt
 $ ls -la source archive
-./tmp/cli-practice/archive:
-total 1
-drwxr-xr-x 1 nemsk 197609   0 Nov 21 17:47 .
-drwxr-xr-x 1 nemsk 197609   0 Nov 21 17:47 ..
--rw-r--r-- 1 nemsk 197609 121 Nov 21 17:47 renamed-note.txt
+archive:
+total 12
+drwxr-xr-x 2 <user> <user> 4096 Nov 23 19:52 .
+drwxr-xr-x 4 <user> <user> 4096 Nov 23 19:52 ..
+-rw-r--r-- 1 <user> <user>  120 Nov 23 19:52 renamed-note.txt
 
-./tmp/cli-practice/source:
-total 0
-drwxr-xr-x 1 nemsk 197609 0 Nov 21 17:47 .
-drwxr-xr-x 1 nemsk 197609 0 Nov 21 17:47 ..
--rw-r--r-- 1 nemsk 197609 0 Nov 21 17:47 .hidden-note
--rw-r--r-- 1 nemsk 197609 0 Nov 21 17:47 empty.txt
-
-$ rm empty.txt
-
-$ find lab -maxdepth 2 -print
-./tmp/cli-practice
-./tmp/cli-practice/archive
-./tmp/cli-practice/archive/renamed-note.txt
-./tmp/cli-practice/source
-./tmp/cli-practice/source/.hidden-note
+source:
+total 8
+drwxr-xr-x 2 <user> <user> 4096 Nov 23 19:52 .
+drwxr-xr-x 4 <user> <user> 4096 Nov 23 19:52 ..
+-rw-r--r-- 1 <user> <user>    0 Nov 23 19:52 .hidden-note
 ```
 
-## 권한 해석
+## 경로와 권한 해석
 
-- `644` = 소유자 `rw-`(읽기+쓰기), 그룹 `r--`(읽기), 기타 사용자 `r--`(읽기)
-- `755` = 소유자 `rwx`(읽기+쓰기+실행), 그룹 `r-x`, 기타 사용자 `r-x`
-- 디렉터리의 실행(`x`) 권한은 그 디렉터리 안으로 진입하고 항목에 접근하기 위해 필요합니다.
-- `777`은 모든 사용자에게 쓰기까지 허용하므로 공유 임시 디렉터리 같은 특별한 경우가 아니라면 피합니다.
-
-이 실습은 Git Bash의 POSIX 호환 명령으로 수행했습니다. Windows NTFS의 최종 접근 제어는 Windows ACL의 영향도 받으므로 Linux 서버에서는 같은 명령을 다시 확인해야 합니다.
+- 절대 경로는 루트 `/`부터 시작합니다. 상대 경로 `archive/renamed-note.txt`는 현재 위치인 실습 디렉터리를 기준으로 해석합니다.
+- 읽기(`r`)는 4, 쓰기(`w`)는 2, 실행 또는 디렉터리 탐색(`x`)은 1입니다. 소유자, 그룹, 기타 사용자 순서로 각 숫자를 해석합니다.
+- 파일 `600` → `644`는 소유자 읽기·쓰기를 유지하면서 그룹과 기타 사용자에게 읽기를 허용합니다.
+- 디렉터리 `700` → `755`는 그룹과 기타 사용자에게 목록 읽기와 디렉터리 안의 항목에 접근하는 권한을 더합니다.
