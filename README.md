@@ -17,7 +17,7 @@
 | 바인드 마운트 | 호스트의 HTML을 수정한 뒤 `curl` 재요청 | [original → updated](docs/docker-practice-log.md) |
 | Docker 볼륨 | 첫 컨테이너 삭제 후 새 컨테이너에서 같은 볼륨 읽기 | [persistent-data 유지](docs/docker-practice-log.md) |
 | Git과 GitHub | `main`과 원격 저장소 확인 | [Git 설정 및 원격 연결 기록](docs/git-vscode-evidence.md) |
-| VS Code 연동 | Accounts에서 GitHub 로그인, Source Control에서 저장소 확인 | [개인 PC 증거 첨부 대기](docs/git-vscode-evidence.md#vs-code-연동-캡처) |
+| VS Code 연동 | Accounts에서 GitHub 로그인, Source Control에서 저장소 확인 | [GitHub 로그인 및 저장소 연동 화면](docs/git-vscode-evidence.md#vs-code-연동-캡처) |
 
 ## 실행 환경
 

@@ -34,9 +34,6 @@ git branch --show-current
 
 ## VS Code 연동 캡처
 
-1. VS Code에서 이 저장소의 폴더를 엽니다.
-2. **Accounts** 메뉴에서 GitHub 로그인 계정을 확인합니다.
-3. **Source Control**에서 저장소를, 왼쪽 아래 상태 표시줄에서 `main`을 확인합니다.
-4. 로그인 여부와 저장소 연동이 확인되는 화면을 캡처합니다. 이메일, 토큰, 인증 코드 등은 가립니다.
+Windows의 VS Code에서 `codyssey-dev-station` 저장소를 열고 Source Control에 표시된 `main` 브랜치를 확인했습니다. Accounts 메뉴의 `sy05kim (GitHub)` 표시는 GitHub 로그인 상태를 보여 줍니다.
 
-Windows의 VS Code 로그인과 저장소 연동 캡처는 첨부 대기 중입니다.
+![VS Code Source Control의 main 브랜치 및 sy05kim GitHub 로그인](vscode-github.png)
