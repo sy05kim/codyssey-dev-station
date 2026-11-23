@@ -27,30 +27,58 @@ jobs:
           KEEP_RESOURCES=1 bash scripts/verify.sh 2>&1 | tee evidence/docker.txt
       - name: Capture port mapping in Chrome
         shell: bash
+        timeout-minutes: 2
         run: |
-          if ! command -v xvfb-run >/dev/null || ! command -v import >/dev/null || ! command -v xwininfo >/dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y imagemagick xvfb xauth x11-utils
-          fi
-          xvfb-run -a -s '-screen 0 1280x900x24' bash -euo pipefail -c '
-            chrome_profile=$(mktemp -d)
-            google-chrome --no-sandbox --disable-dev-shm-usage --no-first-run \
-              --disable-background-networking --window-position=0,0 --window-size=1280,900 \
-              --user-data-dir="$chrome_profile" http://127.0.0.1:8080/ 2>evidence/chrome-startup.log &
-            browser_pid=$!
-            trap '\''kill "$browser_pid" 2>/dev/null || true'\'' EXIT
-            for attempt in {1..30}; do
-              if xwininfo -root -tree | grep "Dev Station" >/dev/null; then
-                sleep 1
-                import -window root evidence/browser-8080.png
-                rm evidence/chrome-startup.log
-                exit
-              fi
-              sleep 1
-            done
-            xwininfo -root -tree
-            exit 1
-          '
+          python3 -m pip install --disable-pip-version-check --target "$RUNNER_TEMP/capture-deps" Pillow
+          export PYTHONPATH="$RUNNER_TEMP/capture-deps"
+          xvfb-run -a -s '-screen 0 1280x900x24' python3 - <<'PYTHON'
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          from tempfile import TemporaryDirectory
+          import time
+          from urllib.request import urlopen
+
+          from PIL import ImageGrab
+
+          url = "http://127.0.0.1:8080/"
+          with TemporaryDirectory() as profile, open("evidence/chrome-startup.log", "w") as log:
+              browser = subprocess.Popen(
+                  [
+                      "google-chrome", "--no-sandbox", "--disable-dev-shm-usage",
+                      "--no-first-run", "--disable-background-networking",
+                      "--window-position=0,0", "--window-size=1280,900",
+                      "--force-device-scale-factor=1", "--remote-debugging-port=0",
+                      f"--user-data-dir={profile}", url,
+                  ],
+                  stdout=log,
+                  stderr=log,
+              )
+              try:
+                  port_file = Path(profile) / "DevToolsActivePort"
+                  for attempt in range(30):
+                      if port_file.exists():
+                          port = port_file.read_text().splitlines()[0]
+                          with urlopen(f"http://127.0.0.1:{port}/json/list", timeout=2) as response:
+                              pages = json.load(response)
+                          if any(page.get("url") == url and "Dev Station" in page.get("title", "") for page in pages):
+                              time.sleep(1)
+                              ImageGrab.grab(xdisplay=os.environ["DISPLAY"]).save("evidence/browser-8080.png")
+                              break
+                      time.sleep(1)
+                  else:
+                      raise RuntimeError(f"Chrome did not finish loading {url}")
+              finally:
+                  browser.terminate()
+                  try:
+                      browser.wait(timeout=5)
+                  except subprocess.TimeoutExpired:
+                      browser.kill()
+                      browser.wait()
+
+          Path("evidence/chrome-startup.log").unlink()
+          PYTHON
       - name: Upload mission evidence
         if: always()
         uses: actions/upload-artifact@v4
