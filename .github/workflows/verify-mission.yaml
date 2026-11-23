@@ -28,21 +28,22 @@ jobs:
       - name: Capture port mapping in Chrome
         shell: bash
         run: |
-          if ! command -v xvfb-run >/dev/null || ! command -v import >/dev/null; then
+          if ! command -v xvfb-run >/dev/null || ! command -v import >/dev/null || ! command -v xwininfo >/dev/null; then
             sudo apt-get update
-            sudo apt-get install -y imagemagick xvfb xauth
+            sudo apt-get install -y imagemagick xvfb xauth x11-utils
           fi
           xvfb-run -a -s '-screen 0 1280x900x24' bash -euo pipefail -c '
             chrome_profile=$(mktemp -d)
             google-chrome --no-sandbox --disable-dev-shm-usage --no-first-run \
               --disable-background-networking --window-position=0,0 --window-size=1280,900 \
-              --user-data-dir="$chrome_profile" http://127.0.0.1:8080/ &
+              --user-data-dir="$chrome_profile" http://127.0.0.1:8080/ 2>evidence/chrome-startup.log &
             browser_pid=$!
             trap '\''kill "$browser_pid" 2>/dev/null || true'\'' EXIT
             for attempt in {1..30}; do
               if xwininfo -root -tree | grep "Dev Station" >/dev/null; then
                 sleep 1
                 import -window root evidence/browser-8080.png
+                rm evidence/chrome-startup.log
                 exit
               fi
               sleep 1
